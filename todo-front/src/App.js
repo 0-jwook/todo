@@ -3,14 +3,20 @@ import React, {useState, useEffect} from 'react';
 function App() {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]); //서버에서 가져온 메시지
+  const [editIndex ,setEditIndex] = useState(null); // 수정중인 메시지의 인덱스
+  const [editText, setEditText] = useState(''); // 수정중인 메시지의 텍스트
 
 
   useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetchMessages = () => {
     fetch('http://localhost:5001/api/messages')
       .then((response) => response.json())
-      .then((data) => setMessages(data.messages))
-      .catch((error) => console.error('Error fetching messages : ', error));
-  }, []);
+      .then((data) => setMessages(data.messages || []))
+      .catch((error) => console.error('Error fetching messages: ', error));
+  };
 
 
   const handleSubmit = (e) => {
@@ -30,6 +36,14 @@ function App() {
       })
       .catch((error) => console.error('error sending data : ', error));
   };
+
+  const handleDelte = (index) => {
+    fetch(`http://localhost:5001/api/messages/${index}`, {
+      method : 'DELETE', 
+    })
+    .then(() => fetchMessages())
+    .catch((error) => console.error('Error deleting message: ', error));
+  };
   
 
   return (
@@ -41,7 +55,12 @@ function App() {
       </form>
       <h2>메시지 목록</h2>
       <ol>
-        {messages.map((msg, index) => (<li key={index}>{msg}</li>))}
+        {messages.map((msg, index) => (
+          <li key={index}>
+            {msg}
+            <button onClick={() => handleDelte(index)}> 삭제 </button>
+            </li>
+          ))}
       </ol>
     </div>
   );

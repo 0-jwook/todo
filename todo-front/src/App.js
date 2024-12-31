@@ -5,7 +5,7 @@ function App() {
   const [messages, setMessages] = useState([]); //서버에서 가져온 메시지
   const [editIndex ,setEditIndex] = useState(null); // 수정중인 메시지의 인덱스
   const [editText, setEditText] = useState(''); // 수정중인 메시지의 텍스트
-
+  const [priority, setPriority] = useState('Low'); // 우선순위 기본값
 
   useEffect(() => {
     fetchMessages();
@@ -26,13 +26,14 @@ function App() {
       headers: {
         'Content-Type' : 'application/json',
       },
-      body : JSON.stringify({text : inputText}),
+      body : JSON.stringify({text : inputText, priority}),
     })
       .then(() => {
         fetch('http://localhost:5001/api/messages')
           .then((response) => response.json())
           .then((data) => setMessages(data.messages));
         setInputText('');
+        setPriority('Low');
       })
       .catch((error) => console.error('error sending data : ', error));
   };
@@ -47,16 +48,16 @@ function App() {
 
   const handleEdit = (index) => {
     setEditIndex(index);
-    setEditText(messages[index]);
+    setEditText(messages[index].text);
   }
 
-  const handelsave = () => {
+  const handlesave = () => {
     fetch(`http://localhost:5001/api/messages/${editIndex}`, {
       method :'PUT',
       headers: {
         'Content-Type' : 'application/json',
       },
-      body : JSON.stringify({text : editText}),
+      body : JSON.stringify({text : editText,priority}),
     })
     .then(() => {
       fetchMessages();
@@ -72,6 +73,11 @@ function App() {
       <h1>React 와 express 데이터 전송</h1>
       <form onSubmit = {handleSubmit}>
         <input type='text' value={inputText} onChange={(e)=> setInputText(e.target.value)} placeholder='텍스트 입력'/>
+        <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+          <option value="High">High</option>
+          <option value="Middle">Middle</option>
+          <option value="Low">Low</option>
+        </select>
         <button type='submit'>전송</button>
       </form>
       <h2>메시지 목록</h2>
@@ -81,12 +87,17 @@ function App() {
             {editIndex === index ? (
               <div>
                 <input type='text' value={editText} onChange={(e) => setEditText(e.target.value)}/>
-                <button onClick={handelsave}>저장</button>
+                <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                  <option value="High">High</option>
+                  <option value="Middle">Middle</option>
+                  <option value="Low">Low</option>
+                </select>
+                <button onClick={handlesave}>저장</button>
                 <button onClick={() => setEditIndex(null)}>취소</button>
               </div>
             ) : (
               <div>
-                {msg}
+                {msg.text}({msg.priority})
                 <button onClick={() => handleEdit(index)}> 수정 </button>
                 <button onClick={() => handleDelte(index)}> 삭제 </button>
               </div>

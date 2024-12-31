@@ -44,6 +44,27 @@ function App() {
     .then(() => fetchMessages())
     .catch((error) => console.error('Error deleting message: ', error));
   };
+
+  const handleEdit = (index) => {
+    setEditIndex(index);
+    setEditText(messages[index]);
+  }
+
+  const handelsave = () => {
+    fetch(`http://localhost:5001/api/messages/${editIndex}`, {
+      method :'PUT',
+      headers: {
+        'Content-Type' : 'application/json',
+      },
+      body : JSON.stringify({text : editText}),
+    })
+    .then(() => {
+      fetchMessages();
+      setEditIndex(null);
+      setEditText('');
+    })
+    .catch((error) => console.error('Error updating message: ', error));
+  }
   
 
   return (
@@ -57,8 +78,19 @@ function App() {
       <ol>
         {messages.map((msg, index) => (
           <li key={index}>
-            {msg}
-            <button onClick={() => handleDelte(index)}> 삭제 </button>
+            {editIndex === index ? (
+              <div>
+                <input type='text' value={editText} onChange={(e) => setEditText(e.target.value)}/>
+                <button onClick={handelsave}>저장</button>
+                <button onClick={() => setEditIndex(null)}>취소</button>
+              </div>
+            ) : (
+              <div>
+                {msg}
+                <button onClick={() => handleEdit(index)}> 수정 </button>
+                <button onClick={() => handleDelte(index)}> 삭제 </button>
+              </div>
+            )}
             </li>
           ))}
       </ol>

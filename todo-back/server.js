@@ -42,6 +42,7 @@ app.delete('/api/messages/:id', (req, res) => {
 app.put('/api/messages/:id', (req, res) => {
     const { id } = req.params; // URL에서 id 추출
     const { text, priority } = req.body; // 요청 바디에서 수정할 텍스트 추출
+    console.log({text, priority})
     const index = parseInt(id, 10); // 문자열을 숫자로 변환
     if (index >= 0 && index<messages.length){
         messages[index] = {text, priority};// 배열 데이터 수정

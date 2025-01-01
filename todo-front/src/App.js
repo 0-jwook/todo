@@ -5,6 +5,7 @@ function App() {
   const [messages, setMessages] = useState([]); //서버에서 가져온 메시지
   const [editIndex ,setEditIndex] = useState(null); // 수정중인 메시지의 인덱스
   const [editText, setEditText] = useState(''); // 수정중인 메시지의 텍스트
+  const [editPriority, setEditpriority] = useState(''); // 수정중인 메시지의 텍스트
   const [priority, setPriority] = useState('Low'); // 우선순위 기본값
 
   useEffect(() => {
@@ -49,6 +50,7 @@ function App() {
   const handleEdit = (index) => {
     setEditIndex(index);
     setEditText(messages[index].text);
+    setEditpriority(messages[index].priority)
   }
 
   const handlesave = () => {
@@ -57,12 +59,13 @@ function App() {
       headers: {
         'Content-Type' : 'application/json',
       },
-      body : JSON.stringify({text : editText,priority}),
+      body : JSON.stringify({text : editText, priority : editPriority}),
     })
     .then(() => {
       fetchMessages();
       setEditIndex(null);
       setEditText('');
+      setEditpriority('');
     })
     .catch((error) => console.error('Error updating message: ', error));
   }
@@ -87,11 +90,11 @@ function App() {
             {editIndex === index ? (
               <div>
                 <input type='text' value={editText} onChange={(e) => setEditText(e.target.value)}/>
-                <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <select value={editPriority} onChange={(e) => setEditpriority(e.target.value)}>
                   <option value="High">High</option>
                   <option value="Middle">Middle</option>
                   <option value="Low">Low</option>
-                </select>
+              </select>
                 <button onClick={handlesave}>저장</button>
                 <button onClick={() => setEditIndex(null)}>취소</button>
               </div>

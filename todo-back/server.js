@@ -1,60 +1,86 @@
 const express = require("express");
 const cors = require("cors");
+const db = require("./db")
 
 const app = express();
 const PORT = 5001;
 
-//데이터 저장용 배열
-const messages = [];
+// db.connect((err) => {
+//     if(err) {
+//         console.error("Error connecting to the database:", err);
+//         return;
+//     }
+//     console.log("sussece connect");
+// })
 
 app.use(cors());
 app.use(express.json());
 
-//POST 요청으로 데이터 저장
-app.post('/api/send', (req, res)=>{
-    const {text, priority} = req.body;
-    console.log("Received text from React : ", {text, priority});
-    messages.push({text, priority}); // 배열에 데이터 저장
-    res.json({messages : messages})
-});
-
-//GET 요청으로 데이터 변환
-app.get('/api/messages', (req, res) => {
-    const sortedMessages = messages.sort((a, b) => {
-        const priorities = {High : 1, Middle : 2, Low : 3}
-        return priorities[a.priority] - priorities[b.priority]
-    })
-
-    res.json({ messages : sortedMessages}); //저장된 데이터 반환
-});
-
-app.delete('/api/messages/:id', (req, res) => {
-    const { id } = req.params;
-    const index = parseInt(id, 10);
-    if (index >= 0 && index < messages.length){
-        messages.splice(index, 1);
-        res.json({success : true})
-    }else{
-        res.status(400).json({success : false, message : "Invalid ID"});
+// POST 요청으로 데이터 저장
+app.post('/api/send',  async(req, res) => {
+    const { text, priority } = req.body;
+    const query = "INSERT INTO messages (text, priority, isCompleted) VALUES (?, ?, ?)";
+    try{
+        await db.query(query, [text, priority, false],)
+        res.json({success : true});
+    }catch(err){
+        console.error("Error inserting data : ", err);
+        res.status(500).json({success : false, message : "Error inserting data"});
     }
 });
 
-app.put('/api/messages/:id', (req, res) => {
+// GET 요청으로 데이터 반환
+app.get('/api/messages', async(req, res) => {
+    const query = "SELECT * FROM messages ORDER BY priority";
+    try{
+        const [results] = await db.query(query)
+        res.json({success : true, data : results});
+    }catch(err){
+        console.error("Error fetching data : ", err);
+        res.status(500).json({success : false, message : "Error fetching data"});
+    }
+});
+
+// DELETE 요청으로 데이터 삭제
+app.delete('/api/messages/:id', async(req, res) => {
+    const { id } = req.params;
+    const query = "DELETE FROM messages WHERE id = ?";
+    try{
+        await db.query(query, [id]);
+        res.json({success : true});
+    }catch{
+        console.error("Error deleting data : ", err);
+        res.status(500).json({success : false, message : "Error deleting data"});
+    }
+}); 
+
+// PUT 요청으로 데이터 수정
+app.put('/api/messages/:id', async(req, res) => {
     const { id } = req.params; // URL에서 id 추출
     const { text, priority } = req.body; // 요청 바디에서 수정할 텍스트 추출
-    console.log({text, priority})
-    const index = parseInt(id, 10); // 문자열을 숫자로 변환
-    if (index >= 0 && index<messages.length){
-        messages[index] = {text, priority};// 배열 데이터 수정
-        res.json({success : true, messages});// 성공 시 업데이트된 데이터 반환
-    }else{
-        res.status(400).json({ success: false, message: "Invalid ID" }); // 실패 시 에러 메시지
+    const query = "UPDATE messages SET text = ?, priority = ? WHERE id = ?";
+    try{
+        await db.query(query ,[text, priority, id])
+        res.json({success : true});
+    }catch{
+        console.error("Error updating data : ", err);
+        res.status(500).json({success : false, message : "Error updating data"});
     }
-    
-})
-
-app.listen(PORT, ()=>{
-    console.log(`Sever is running on http://localhost:${PORT}`);
 });
 
+// PUT 요청으로 완료 여부 변경
+app.put('/api/messages/complete/:id', async(req, res) => {
+    const { id } = req.params;
+    const query = "UPDATE messages SET isCompleted = NOT isCompleted WHERE id = ?";
+    try{
+        await db.query(query, [id])
+        res.json({success : true});
+    }catch{
+        console.error("Error updating compltetion status : ", err);
+        res.status(500).json({success : false, message : "Error updating compltetion status"});
+    }
+});
 
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});

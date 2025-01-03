@@ -5,13 +5,6 @@ const db = require("./db")
 const app = express();
 const PORT = 5001;
 
-// db.connect((err) => {
-//     if(err) {
-//         console.error("Error connecting to the database:", err);
-//         return;
-//     }
-//     console.log("sussece connect");
-// })
 
 app.use(cors());
 app.use(express.json());
